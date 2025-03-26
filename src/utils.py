@@ -20,7 +20,7 @@ def softmax(x) : #vektor dalam array
 
 # ----------- TURUNAN ACTIVATION FUNCTIONS -----------
 def d_linear(x) :
-    return np.ones_like(Z)
+    return np.ones_like(x)
 
 def d_relu(x) :
     return (x>0).astype(float)
