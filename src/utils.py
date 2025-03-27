@@ -1,4 +1,6 @@
 import numpy as np
+import matplotlib.pyplot as plt
+import pickle
 
 # ----------- ACTIVATION FUNCTIONS -----------
 def linear(x) :
@@ -14,8 +16,9 @@ def tanh(x) :
     return np.tanh(x) 
 
 def softmax(x) : #vektor dalam array
-    exp_x = np.exp(x-np.max(x))
-    return exp_x / np.sum(exp_x) 
+    x = x-np.max(x, axis=1, keepdims=True)
+    exp_x = np.exp(x)
+    return exp_x/np.sum(exp_x, axis=1, keepdims=True)
 
 
 # ----------- TURUNAN ACTIVATION FUNCTIONS -----------
@@ -68,5 +71,24 @@ def initialize_weights(input_size, output_size, method="uniform", **kwargs):
         return np.random.uniform(low, high, (input_size, output_size))
     elif method == "normal":
         mean = kwargs.get("mean", 0)
-        std = kwargs.get("std", 0.1)
+        std = kwargs.get("std", 0.01)
         return np.random.normal(mean, std, (input_size, output_size))
+    
+# ----------- PLOTTING LOST -----------
+def plot_loss_history(history):
+    plt.plot(history["train_loss"], label="Train Loss")
+    plt.plot(history["val_loss"], label="Validation Loss")
+    plt.xlabel("Epoch")
+    plt.ylabel("Loss")
+    plt.legend()
+    plt.show()
+
+# ----------- SAVE -----------
+def save_model(model, filename):
+    with open(filename, 'wb') as f:
+        pickle.dump(model.__dict__, f)
+
+# ----------- LOAD -----------
+def load_model(model, filename):
+    with open(filename, 'rb') as f:
+        model.__dict__ = pickle.load(f)
