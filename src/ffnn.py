@@ -1,9 +1,13 @@
 import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.cm as cm
+import matplotlib.colors as colors
+import networkx as nx
 from utils import (
     linear, relu, sigmoid, tanh, softmax, 
     d_linear, d_relu, d_sigmoid, d_tanh,
     mse, binary_cross_entropy, categorical_cross_entropy,
-    d_mse, d_bce, d_cce, initialize_weights
+    d_mse, d_bce, d_cce, initialize_weights,save_model,load_model
 )
 
 class FFNN :
@@ -100,24 +104,145 @@ class FFNN :
             layer["grad_bias"] = np.clip(layer["grad_bias"], -1, 1)
             layer["weights"] -= self.learning_rate*layer["grad_weights"]
             layer["bias"] -= self.learning_rate*layer["grad_bias"]
+
+
+    def plot_weight_distribution(self, layers=None):
+        """Plot weight distribution for specified layers"""
+        if layers is None:
+            layers = range(len(self.layers))
+        
+        plt.figure(figsize=(12, 4*len(layers)))
+        for i in layers:
+            plt.subplot(len(layers), 1, i+1)
+            plt.hist(self.layers[i]['weights'].flatten(), bins=50)
+            plt.title(f'Weight Distribution - Layer {i}')
+        plt.tight_layout()
+        plt.show()
     
-    def train(self, X_train, y_train, X_val, y_val, epochs=100, batch_size=32, verbose=1) :
-        for epoch in range(epochs) :
-            for i in range(0, len(X_train), batch_size) :
+    def plot_weight_gradient_distribution(self, layers=None):
+        """Plot weight gradient distribution for specified layers"""
+        if layers is None:
+            layers = range(len(self.layers))
+        
+        plt.figure(figsize=(12, 4*len(layers)))
+        for i in layers:
+            plt.subplot(len(layers), 1, i+1)
+            if self.layers[i].get('grad_weights') is not None:
+                plt.hist(self.layers[i]['grad_weights'].flatten(), bins=50)
+                plt.title(f'Weight Gradient Distribution - Layer {i}')
+        plt.tight_layout()
+        plt.show()
+
+    def visualize_network_structure(self, highlight_weights=True, highlight_gradients=False):
+        """
+        Parameters:
+        -----------
+        highlight_weights : bool, optional (default=True)
+            If True, color nodes and edges based on weight magnitudes
+        highlight_gradients : bool, optional (default=False)
+            If True, color nodes and edges based on gradient magnitudes
+        """
+        G = nx.DiGraph()
+        pos = {}
+        edge_weights = []
+        for layer_idx, layer in enumerate(self.layers):
+            num_neurons = layer['weights'].shape[1]
+            for neuron_idx in range(num_neurons):
+                node_name = f'Layer {layer_idx} - Neuron {neuron_idx}'
+                G.add_node(node_name)
+                pos[node_name] = (layer_idx, neuron_idx - (num_neurons-1)/2)
+        
+        for layer_idx in range(len(self.layers)-1):
+            current_layer_neurons = self.layers[layer_idx]['weights'].shape[1]
+            next_layer_neurons = self.layers[layer_idx+1]['weights'].shape[1]
+            
+            for curr_neuron in range(current_layer_neurons):
+                for next_neuron in range(next_layer_neurons):
+                    curr_node = f'Layer {layer_idx} - Neuron {curr_neuron}'
+                    next_node = f'Layer {layer_idx+1} - Neuron {next_neuron}'
+                    
+                    if highlight_weights:
+                        weight = abs(self.layers[layer_idx]['weights'][curr_neuron, next_neuron])
+                    elif highlight_gradients and self.layers[layer_idx].get('grad_weights') is not None:
+                        weight = abs(self.layers[layer_idx]['grad_weights'][curr_neuron, next_neuron])
+                    else:
+                        weight = 1
+                    
+                    G.add_edge(curr_node, next_node, weight=weight)
+                    edge_weights.append(weight)
+        
+        fig, ax = plt.subplots(figsize=(15, 10))
+        
+        if edge_weights:
+            norm = colors.Normalize(vmin=min(edge_weights), vmax=max(edge_weights))
+            cmap = cm.coolwarm
+            
+            for (u, v, data) in G.edges(data=True):
+                nx.draw_networkx_edges(
+                    G, pos, 
+                    edgelist=[(u,v)], 
+                    edge_color=cmap(norm(data['weight'])),  
+                    width=max(0.1, 2 * data['weight']), 
+                    alpha=0.6, 
+                    arrows=True, 
+                    arrowsize=10,
+                    ax=ax
+                )
+            
+            sm = cm.ScalarMappable(cmap=cmap, norm=norm)
+            sm.set_array([])  
+            
+            plt.colorbar(sm, ax=ax, label='Weight/Gradient Magnitude')
+        else:
+            nx.draw_networkx_edges(
+                G, pos, 
+                edge_color='blue', 
+                width=0.5, 
+                alpha=0.6, 
+                arrows=True, 
+                arrowsize=10,
+                ax=ax
+            )
+        
+        nx.draw_networkx_nodes(G, pos, node_color='lightblue', node_size=300, alpha=0.8, ax=ax)
+        nx.draw_networkx_labels(G, pos, font_size=8, font_weight="bold", ax=ax)
+        
+        ax.set_title("Neural Network Structure Visualization")
+        ax.axis('off')
+        
+        plt.tight_layout()
+        plt.show()
+
+    def save(self, filename):
+        save_model(self, filename)
+    
+    def load(self, filename):
+        load_model(self, filename)
+    
+    def train(self, X_train, y_train, X_val, y_val, epochs=100, batch_size=32, verbose=1):
+        for epoch in range(epochs):
+            epoch_train_losses = []
+            
+            for i in range(0, len(X_train), batch_size):
                 X_batch = X_train[i:i+batch_size]
                 y_batch = y_train[i:i+batch_size]
                 
                 y_pred = self.forward(X_batch)
                 self.backward(y_batch, y_pred)
                 self.update_weights()
+                
+                batch_loss = self._get_loss_function()(y_batch, y_pred)
+                epoch_train_losses.append(batch_loss)
             
-            train_loss = self.compute_loss(X_train, y_train)
+            train_loss = np.mean(epoch_train_losses)
             val_loss = self.compute_loss(X_val, y_val)
+            
             self.history["train_loss"].append(train_loss)
             self.history["val_loss"].append(val_loss)
             
             if verbose == 1:
                 print(f"Epoch {epoch+1}/{epochs}, Train Loss: {train_loss:.4f}, Val Loss: {val_loss:.4f}")
+    
 
     def compute_loss(self, X, y) :
         y_pred = self.forward(X)
@@ -126,3 +251,4 @@ class FFNN :
 
     def predict(self, X):
         return self.forward(X)
+    
