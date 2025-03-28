@@ -35,5 +35,5 @@ Proyek ini mencakup:
 
 
 ## Pembagian Tugas
-13522001: Visualisasi (struktur jaringan, distribusi bobot, distribusi gradien). Dokumentasi dan perbandingan dengan scikit-learn
+13522001: Visualisasi (struktur jaringan, distribusi bobot, distribusi gradien). Dokumentasi dan perbandingan dengan scikit-learn. 
 13522105: Implementasi FFNN (forward pass, backward pass, update weights). Eksperimen parameter (jumlah layer, fungsi aktivasi, learning rate).
