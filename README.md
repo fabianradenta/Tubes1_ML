@@ -27,14 +27,12 @@ Proyek ini mencakup:
 ## Cara Menjalankan Program
 1. Untuk menjalankan eksperimen dan visualisasi:
     ```bash
-    python src/test_ffnn.py
+    run test_ffnn.ipynb
 
 2. Untuk menjalankan visualisasi struktur jaringan:
     ```bash
-    python src/test_ffnn_visualizations.py
-3. Untuk melatih model:
-    ```bash
-    python src/train.py
+    run test_ffnn_visualizations.ipynb
+
 
 ## Pembagian Tugas
 13522001: Visualisasi (struktur jaringan, distribusi bobot, distribusi gradien). Dokumentasi dan perbandingan dengan scikit-learn
