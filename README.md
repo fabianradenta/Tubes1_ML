@@ -1,9 +1,8 @@
 # Tubes1_ML
+> *Source code* ini dibuat untuk memenuhi Tugas Besar 1 Mata Kuliah IF3270 Pembelajaran Mesin.
 
-Repository ini berisi implementasi dan eksperimen untuk membangun dan menguji Feedforward Neural Network (FFNN) sederhana menggunakan Python. Proyek ini dibuat sebagai bagian dari tugas besar mata kuliah Machine Learning.
-
-## Deskripsi
-Proyek ini mencakup:
+## Deskripsi Singkat
+Repository ini berisi implementasi dan eksperimen untuk membangun dan menguji Feed Forward Neural Network (FFNN) sederhana menggunakan bahasa pemrograman Python. Proyek ini mencakup:
 - Implementasi FFNN dari awal tanpa library machine learning.
 - Eksperimen dengan berbagai parameter seperti jumlah layer, fungsi aktivasi, dan learning rate.
 - Visualisasi struktur jaringan, distribusi bobot, dan gradien.
@@ -21,19 +20,22 @@ Proyek ini mencakup:
     venv\Scripts\activate     # Untuk Windows
 3. Install dependencies:
     ```bash
-    pip install -r requirements.txt
-4. Pastikan dataset MNIST tersedia atau unduh secara otomatis saat program dijalankan.
+    pip install -r src/requirements.txt
 
 ## Cara Menjalankan Program
 1. Untuk menjalankan eksperimen dan visualisasi:
     ```bash
-    run test_ffnn.ipynb
+    jupyter notebook src/test_ffnn.ipynb
 
 2. Untuk menjalankan visualisasi struktur jaringan:
     ```bash
-    run test_ffnn_visualizations.ipynb
+    jupyter notebook src/test_ffnn_visualizations.ipynb
 
 
 ## Pembagian Tugas
-1. 13522001: Visualisasi (struktur jaringan, distribusi bobot, distribusi gradien). Dokumentasi dan perbandingan dengan scikit-learn.
-2. 13522105: Implementasi FFNN (forward pass, backward pass, update weights). Eksperimen parameter (jumlah layer, fungsi aktivasi, learning rate).
+| **No** | **NIM**     | **Tugas**                                                                 |
+|--------|-------------|---------------------------------------------------------------------------|
+| 1      | 13522001    | - Visualisasi (struktur jaringan, distribusi bobot, distribusi gradien).  |
+|        |             | - Dokumentasi dan perbandingan dengan scikit-learn.                       |
+| 2      | 13522105    | - Implementasi FFNN (forward pass, backward pass, update weights).        |
+|        |             | - Eksperimen parameter (jumlah layer, fungsi aktivasi, learning rate).    |
