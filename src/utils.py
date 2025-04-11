@@ -41,6 +41,9 @@ def d_sigmoid(x) :
 def d_tanh(x) :
     return 1-np.tanh(x)**2
 
+def d_softmax(x) :
+    return np.ones_like(x)
+
 def d_leaky_relu(x, alpha=0.01):
     return np.where(x>0, 1, alpha)
 
