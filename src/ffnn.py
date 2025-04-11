@@ -11,7 +11,7 @@ from utils import (
 )
 
 class FFNN :
-    def __init__(self, layer_sizes, activation_func, loss_func, weight_init="uniform", learning_rate=0.01):
+    def __init__(self, layer_sizes, activation_func, loss_func, weight_init="uniform", learning_rate=0.01, l1_lambda=0, l2_lambda=0):
         self.layers = []
         for i in range (len(layer_sizes)-1) :
             layer = {
@@ -24,6 +24,8 @@ class FFNN :
             self.layers.append(layer)
         self.loss_func = loss_func
         self.learning_rate = learning_rate
+        self.l1_lambda = l1_lambda
+        self.l2_lambda = l2_lambda
         self.history = {"train_loss" : [], "val_loss" : []}
 
     def _apply_activation(self, x, activation) :
@@ -78,6 +80,17 @@ class FFNN :
             x = A
         return x
     
+    def compute_regularization_loss(self):
+        l1_loss = 0
+        l2_loss = 0
+        if self.l1_lambda > 0 or self.l2_lambda > 0:
+            for layer in self.layers:
+                if self.l1_lambda > 0:
+                    l1_loss+=np.sum(np.abs(layer["weights"]))
+                if self.l2_lambda > 0:
+                    l2_loss+=np.sum(np.square(layer["weights"]))
+        return self.l1_lambda*l1_loss+0.5*self.l2_lambda*l2_loss
+    
     def backward(self, y_true, y_pred) :
         if self.layers[-1]["activation"] == "softmax" and self.loss_func == "cce":
             error = y_pred-y_true
@@ -95,6 +108,13 @@ class FFNN :
                 prev_output = self.layers[i-1]["output"]
             
             layer["grad_weights"] = np.dot(prev_output.T, dA)
+            if self.l1_lambda > 0:
+                l1_grad = np.sign(layer["weights"])
+                layer["grad_weights"]+=self.l1_lambda*l1_grad
+            if self.l2_lambda > 0:
+                l2_grad = layer["weights"]
+                layer["grad_weights"]+=self.l2_lambda*l2_grad
+            
             layer["grad_bias"] = np.sum(dA, axis=0, keepdims=True)
             error = np.dot(dA, layer["weights"].T)
 
@@ -232,7 +252,10 @@ class FFNN :
                 self.update_weights()
                 
                 batch_loss = self._get_loss_function()(y_batch, y_pred)
-                epoch_train_losses.append(batch_loss)
+                reg_loss = self.compute_regularization_loss()
+                total_loss = batch_loss+reg_loss
+                
+                epoch_train_losses.append(total_loss)
             
             train_loss = np.mean(epoch_train_losses)
             val_loss = self.compute_loss(X_val, y_val)
@@ -247,7 +270,9 @@ class FFNN :
     def compute_loss(self, X, y) :
         y_pred = self.forward(X)
         loss_func = self._get_loss_function()
-        return loss_func(y,y_pred)
+        data_loss = loss_func(y, y_pred)
+        reg_loss = self.compute_regularization_loss()
+        return data_loss+reg_loss
 
     def predict(self, X):
         return self.forward(X)
