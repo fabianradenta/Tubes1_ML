@@ -4,10 +4,10 @@ import matplotlib.cm as cm
 import matplotlib.colors as colors
 import networkx as nx
 from utils import (
-    linear, relu, sigmoid, tanh, softmax, 
-    d_linear, d_relu, d_sigmoid, d_tanh,
+    linear, relu, sigmoid, tanh, softmax, leaky_relu, elu,
+    d_linear, d_relu, d_sigmoid, d_tanh, d_softmax,d_leaky_relu, d_elu,
     mse, binary_cross_entropy, categorical_cross_entropy,
-    d_mse, d_bce, d_cce, initialize_weights,save_model,load_model
+    d_mse, d_bce, d_cce, initialize_weights,save_model,load_model,
 )
 
 class FFNN :
@@ -39,6 +39,12 @@ class FFNN :
             return tanh(x)
         elif activation=="softmax" :
             return softmax(x)
+        elif activation=="leaky_relu" :
+            return leaky_relu(x)
+        elif activation=="elu" :
+            return elu(x)
+        else:
+            raise ValueError(f"Aktivasi tidak dikenal: {activation}")
         
     def _activation_derivative(self, x, activation) :
         if activation=="linear" :
@@ -49,8 +55,12 @@ class FFNN :
             return d_sigmoid(x)
         elif activation=="tanh" :
             return d_tanh(x)
-        elif activation=='softmax' :
-            return np.ones_like(x)
+        elif activation=="softmax" :
+            return d_softmax(x)
+        elif activation=="leaky_relu" :
+            return d_leaky_relu(x)
+        elif activation=="elu" :
+            return d_elu(x)
         else:
             raise ValueError(f"Aktivasi tidak dikenal: {activation}")
         
@@ -154,14 +164,6 @@ class FFNN :
         plt.show()
 
     def visualize_network_structure(self, highlight_weights=True, highlight_gradients=False):
-        """
-        Parameters:
-        -----------
-        highlight_weights : bool, optional (default=True)
-            If True, color nodes and edges based on weight magnitudes
-        highlight_gradients : bool, optional (default=False)
-            If True, color nodes and edges based on gradient magnitudes
-        """
         G = nx.DiGraph()
         pos = {}
         edge_weights = []
@@ -239,13 +241,47 @@ class FFNN :
     def load(self, filename):
         load_model(self, filename)
     
+    # def train(self, X_train, y_train, X_val, y_val, epochs=100, batch_size=32, verbose=1):
+    #     for epoch in range(epochs):
+    #         epoch_train_losses = []
+            
+    #         for i in range(0, len(X_train), batch_size):
+    #             X_batch = X_train[i:i+batch_size]
+    #             y_batch = y_train[i:i+batch_size]
+                
+    #             y_pred = self.forward(X_batch)
+    #             self.backward(y_batch, y_pred)
+    #             self.update_weights()
+                
+    #             batch_loss = self._get_loss_function()(y_batch, y_pred)
+    #             reg_loss = self.compute_regularization_loss()
+    #             total_loss = batch_loss+reg_loss
+                
+    #             epoch_train_losses.append(total_loss)
+            
+    #         train_loss = np.mean(epoch_train_losses)
+    #         val_loss = self.compute_loss(X_val, y_val)
+            
+    #         self.history["train_loss"].append(train_loss)
+    #         self.history["val_loss"].append(val_loss)
+            
+    #         if verbose == 1:
+    #             print(f"Epoch {epoch+1}/{epochs}, Train Loss: {train_loss:.4f}, Val Loss: {val_loss:.4f}")
     def train(self, X_train, y_train, X_val, y_val, epochs=100, batch_size=32, verbose=1):
         for epoch in range(epochs):
             epoch_train_losses = []
             
+            indices = np.arange(len(X_train))
+            np.random.shuffle(indices)
+            
+            if verbose == 1:
+                from tqdm import tqdm
+                pbar = tqdm(total=len(X_train), desc=f'Epoch {epoch+1}/{epochs}', unit='samples')
+            
             for i in range(0, len(X_train), batch_size):
-                X_batch = X_train[i:i+batch_size]
-                y_batch = y_train[i:i+batch_size]
+                batch_indices = indices[i:i+batch_size]
+                X_batch = X_train[batch_indices]
+                y_batch = y_train[batch_indices]
                 
                 y_pred = self.forward(X_batch)
                 self.backward(y_batch, y_pred)
@@ -253,18 +289,26 @@ class FFNN :
                 
                 batch_loss = self._get_loss_function()(y_batch, y_pred)
                 reg_loss = self.compute_regularization_loss()
-                total_loss = batch_loss+reg_loss
+                epoch_train_losses.append(batch_loss + reg_loss)
                 
-                epoch_train_losses.append(total_loss)
+                if verbose == 1:
+                    pbar.update(len(X_batch))
+                    pbar.set_postfix({'Train Loss': f'{np.mean(epoch_train_losses):.4f}'})
+            
+            if verbose == 1:
+                pbar.close()
             
             train_loss = np.mean(epoch_train_losses)
             val_loss = self.compute_loss(X_val, y_val)
-            
             self.history["train_loss"].append(train_loss)
             self.history["val_loss"].append(val_loss)
             
             if verbose == 1:
-                print(f"Epoch {epoch+1}/{epochs}, Train Loss: {train_loss:.4f}, Val Loss: {val_loss:.4f}")
+                print(f'Epoch {epoch+1}/{epochs} - '
+                    f'Train Loss: {train_loss:.4f} - '
+                    f'Val Loss: {val_loss:.4f}')
+        
+        return self.history
     
 
     def compute_loss(self, X, y) :
