@@ -93,13 +93,3 @@ def initialize_weights(input_size, output_size, method="uniform", **kwargs):
     elif method=="he" :
         std = np.sqrt(2/input_size)
         return np.random.normal(0, std, (input_size, output_size))
-    
-
-# ----------- PLOTTING LOST -----------
-def plot_loss_history(history):
-    plt.plot(history["train_loss"], label="Train Loss")
-    plt.plot(history["val_loss"], label="Validation Loss")
-    plt.xlabel("Epoch")
-    plt.ylabel("Loss")
-    plt.legend()
-    plt.show()
