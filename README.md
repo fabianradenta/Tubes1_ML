@@ -8,7 +8,7 @@ Repository ini berisi implementasi dan eksperimen untuk membangun dan menguji Fe
 - Visualisasi struktur jaringan, distribusi bobot, dan gradien.
 - Perbandingan performa dengan library scikit-learn.
 
-## Cara Setup
+## Cara Setup dan Menjalankan Program
 1. Clone repository ini:
    ```bash
    git clone https://github.com/fabianradenta/Tubes1_ML
@@ -21,16 +21,7 @@ Repository ini berisi implementasi dan eksperimen untuk membangun dan menguji Fe
 3. Install dependencies:
     ```bash
     pip install -r src/requirements.txt
-
-## Cara Menjalankan Program
-1. Untuk menjalankan eksperimen dan visualisasi:
-    ```bash
-    jupyter notebook src/test_ffnn.ipynb
-
-2. Untuk menjalankan visualisasi struktur jaringan:
-    ```bash
-    jupyter notebook src/test_ffnn_visualizations.ipynb
-
+4. Jalankan program dengan Run All pada notebook `test_ffnn.ipynb`
 
 ## Pembagian Tugas
 | **No** | **NIM**     | **Tugas**                                                                 |
