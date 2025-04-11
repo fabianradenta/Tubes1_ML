@@ -20,6 +20,12 @@ def softmax(x) : #vektor dalam array
     exp_x = np.exp(x)
     return exp_x/np.sum(exp_x, axis=1, keepdims=True)
 
+def leaky_relu(x, alpha=0.01):
+    return np.where(x>0, x, alpha*x)
+
+def elu(x, alpha=1.0):
+    return np.where(x>0, x, alpha*(np.exp(x)-1))
+
 
 # ----------- TURUNAN ACTIVATION FUNCTIONS -----------
 def d_linear(x) :
@@ -34,6 +40,12 @@ def d_sigmoid(x) :
 
 def d_tanh(x) :
     return 1-np.tanh(x)**2
+
+def d_leaky_relu(x, alpha=0.01):
+    return np.where(x>0, 1, alpha)
+
+def d_elu(x, alpha=1.0):
+    return np.where(x>0, 1, alpha * np.exp(x))
 
 
 # ----------- LOSS FUNCTIONS -----------
@@ -73,7 +85,14 @@ def initialize_weights(input_size, output_size, method="uniform", **kwargs):
         mean = kwargs.get("mean", 0)
         std = kwargs.get("std", 0.01)
         return np.random.normal(mean, std, (input_size, output_size))
+    elif method == "xavier":
+        limit = np.sqrt(6/(input_size+output_size))
+        return np.random.uniform(-limit, limit, (input_size, output_size))
+    elif method=="he" :
+        std = np.sqrt(2/input_size)
+        return np.random.normal(0, std, (input_size, output_size))
     
+
 # ----------- PLOTTING LOST -----------
 def plot_loss_history(history):
     plt.plot(history["train_loss"], label="Train Loss")
