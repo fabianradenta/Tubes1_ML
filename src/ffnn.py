@@ -241,32 +241,6 @@ class FFNN :
     def load(self, filename):
         load_model(self, filename)
     
-    # def train(self, X_train, y_train, X_val, y_val, epochs=100, batch_size=32, verbose=1):
-    #     for epoch in range(epochs):
-    #         epoch_train_losses = []
-            
-    #         for i in range(0, len(X_train), batch_size):
-    #             X_batch = X_train[i:i+batch_size]
-    #             y_batch = y_train[i:i+batch_size]
-                
-    #             y_pred = self.forward(X_batch)
-    #             self.backward(y_batch, y_pred)
-    #             self.update_weights()
-                
-    #             batch_loss = self._get_loss_function()(y_batch, y_pred)
-    #             reg_loss = self.compute_regularization_loss()
-    #             total_loss = batch_loss+reg_loss
-                
-    #             epoch_train_losses.append(total_loss)
-            
-    #         train_loss = np.mean(epoch_train_losses)
-    #         val_loss = self.compute_loss(X_val, y_val)
-            
-    #         self.history["train_loss"].append(train_loss)
-    #         self.history["val_loss"].append(val_loss)
-            
-    #         if verbose == 1:
-    #             print(f"Epoch {epoch+1}/{epochs}, Train Loss: {train_loss:.4f}, Val Loss: {val_loss:.4f}")
     def train(self, X_train, y_train, X_val, y_val, epochs=100, batch_size=32, verbose=1):
         for epoch in range(epochs):
             epoch_train_losses = []
