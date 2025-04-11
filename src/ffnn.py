@@ -3,15 +3,16 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import matplotlib.colors as colors
 import networkx as nx
+import pickle
 from utils import (
     linear, relu, sigmoid, tanh, softmax, leaky_relu, elu,
     d_linear, d_relu, d_sigmoid, d_tanh, d_softmax,d_leaky_relu, d_elu,
     mse, binary_cross_entropy, categorical_cross_entropy,
-    d_mse, d_bce, d_cce, initialize_weights,save_model,load_model,
+    d_mse, d_bce, d_cce, initialize_weights
 )
 
 class FFNN :
-    def __init__(self, layer_sizes, activation_func, loss_func, weight_init="uniform", learning_rate=0.01, l1_lambda=0, l2_lambda=0):
+    def __init__(self, layer_sizes, activation_func, loss_func="cce", weight_init="uniform", learning_rate=0.01, l1_lambda=0, l2_lambda=0):
         self.layers = []
         for i in range (len(layer_sizes)-1) :
             layer = {
@@ -44,7 +45,7 @@ class FFNN :
         elif activation=="elu" :
             return elu(x)
         else:
-            raise ValueError(f"Aktivasi tidak dikenal: {activation}")
+            raise ValueError(f"Unknown function: {activation}")
         
     def _activation_derivative(self, x, activation) :
         if activation=="linear" :
@@ -62,7 +63,7 @@ class FFNN :
         elif activation=="elu" :
             return d_elu(x)
         else:
-            raise ValueError(f"Aktivasi tidak dikenal: {activation}")
+            raise ValueError(f"Unknown function: {activation}")
         
     def _get_loss_function(self) :
         if self.loss_func=="mse" :
@@ -105,8 +106,7 @@ class FFNN :
         if self.layers[-1]["activation"] == "softmax" and self.loss_func == "cce":
             error = y_pred-y_true
         else:
-            loss_derivative_func = self._get_loss_derivative()
-            error = loss_derivative_func(y_true, y_pred)
+            error = self._get_loss_derivative()(y_true, y_pred)
         for i in reversed(range(len(self.layers))) :
             layer = self.layers[i]
             A = layer["output"]
@@ -137,7 +137,6 @@ class FFNN :
 
 
     def plot_weight_distribution(self, layers=None):
-        """Plot weight distribution for specified layers"""
         if layers is None:
             layers = range(len(self.layers))
         
@@ -150,7 +149,6 @@ class FFNN :
         plt.show()
     
     def plot_weight_gradient_distribution(self, layers=None):
-        """Plot weight gradient distribution for specified layers"""
         if layers is None:
             layers = range(len(self.layers))
         
@@ -236,10 +234,31 @@ class FFNN :
         plt.show()
 
     def save(self, filename):
-        save_model(self, filename)
+        model_data = {
+            "layers": self.layers,
+            "loss_func": self.loss_func,
+            "learning_rate": self.learning_rate,
+            "l1_lambda": self.l1_lambda,
+            "l2_lambda": self.l2_lambda,
+            "history": self.history
+        }
+        
+        with open(filename, 'wb') as f:
+            pickle.dump(model_data, f)
+        print(f"Model saved to {filename}")
     
     def load(self, filename):
-        load_model(self, filename)
+        with open(filename, 'rb') as f:
+            model_data = pickle.load(f)
+
+        self.layers = model_data["layers"]
+        self.loss_func = model_data["loss_func"]
+        self.learning_rate = model_data["learning_rate"]
+        self.l1_lambda = model_data["l1_lambda"]
+        self.l2_lambda = model_data["l2_lambda"]
+        self.history = model_data["history"]
+        
+        print(f"Model loaded from {filename}")
     
     def train(self, X_train, y_train, X_val, y_val, epochs=100, batch_size=32, verbose=1):
         for epoch in range(epochs):
@@ -267,7 +286,6 @@ class FFNN :
                 
                 if verbose == 1:
                     pbar.update(len(X_batch))
-                    pbar.set_postfix({'Train Loss': f'{np.mean(epoch_train_losses):.4f}'})
             
             if verbose == 1:
                 pbar.close()
@@ -278,9 +296,7 @@ class FFNN :
             self.history["val_loss"].append(val_loss)
             
             if verbose == 1:
-                print(f'Epoch {epoch+1}/{epochs} - '
-                    f'Train Loss: {train_loss:.4f} - '
-                    f'Val Loss: {val_loss:.4f}')
+                print(f'\tTrain Loss: {train_loss:.4f} - Val Loss: {val_loss:.4f}')
         
         return self.history
     
@@ -294,4 +310,3 @@ class FFNN :
 
     def predict(self, X):
         return self.forward(X)
-    

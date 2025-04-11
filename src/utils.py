@@ -1,6 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import pickle
 
 # ----------- ACTIVATION FUNCTIONS -----------
 def linear(x) :
@@ -104,13 +103,3 @@ def plot_loss_history(history):
     plt.ylabel("Loss")
     plt.legend()
     plt.show()
-
-# ----------- SAVE -----------
-def save_model(model, filename):
-    with open(filename, 'wb') as f:
-        pickle.dump(model.__dict__, f)
-
-# ----------- LOAD -----------
-def load_model(model, filename):
-    with open(filename, 'rb') as f:
-        model.__dict__ = pickle.load(f)
